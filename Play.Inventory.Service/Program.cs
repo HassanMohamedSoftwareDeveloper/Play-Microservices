@@ -1,6 +1,8 @@
 ﻿using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
 using Play.Shared.MongoDB;
+using Polly;
+using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +11,19 @@ builder.Services.AddMongo().AddMongoRepository<InventoryItem>("inventoryitems");
 
 builder.Services.AddHttpClient<CatalogClient>(client =>
 {
-    client.BaseAddress =new Uri("https://localhost:7069");
-});
+    client.BaseAddress = new Uri("https://localhost:7069");
+})
+    .AddTransientHttpErrorPolicy(
+    policyBuilder => policyBuilder.Or<TimeoutRejectedException>().WaitAndRetryAsync(4,
+    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+    onRetry: (outcome, timespan, retryAttempt) =>
+    {
+        var serviceProvider = builder.Services.BuildServiceProvider();
+        serviceProvider.GetService<ILogger<CatalogClient>>()
+        .LogWarning("Delaying for {delayTime} seconds, then making retry {retry}", timespan.TotalSeconds, retryAttempt);
+    }))
+    .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
+
 builder.Services.AddControllers(options =>
 {
     options.SuppressAsyncSuffixInActionNames = false;

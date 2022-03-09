@@ -9,19 +9,36 @@ public class ItemController : ControllerBase
 {
     #region Fileds :
     private readonly IRepository<Item> _itemsRepository;
+    private static int _requestCounter = 0;
     #endregion
 
     #region CTORS :
     public ItemController(IRepository<Item> itemsRepository)
     {
         this._itemsRepository = itemsRepository;
-    } 
+    }
     #endregion
 
     #region Endpoints :
     //GET /items 
     [HttpGet]
-    public async Task<IEnumerable<ItemDto>> GetAsync() => (await _itemsRepository.GetAllAsync()).Select(x => x.AsDto());
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetAsync()
+    {
+        _requestCounter++;
+        Console.WriteLine($"Request {_requestCounter}: Starting..");
+        if (_requestCounter <= 2)
+        {
+            Console.WriteLine($"Request {_requestCounter}: Delaying..");
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
+        if (_requestCounter <= 4)
+        {
+            Console.WriteLine($"Request {_requestCounter}: 500 (Internal Server Error)..");
+            return StatusCode(500);
+        }
+        Console.WriteLine($"Request {_requestCounter}: Ok..");
+        return Ok((await _itemsRepository.GetAllAsync()).Select(x => x.AsDto()));
+    }
     //GET /items/{id}
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemDto>> GetByIdAsync(Guid id)
