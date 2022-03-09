@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Play.Catalog.Service.Entities;
-using Play.Catalog.Service.Repositories;
+using Play.Shared;
 
 namespace Play.Catalog.Service.Controllers;
 [Route("items")]
@@ -8,11 +8,11 @@ namespace Play.Catalog.Service.Controllers;
 public class ItemController : ControllerBase
 {
     #region Fileds :
-    private readonly IItemsRepository _itemsRepository;
+    private readonly IRepository<Item> _itemsRepository;
     #endregion
 
     #region CTORS :
-    public ItemController(IItemsRepository itemsRepository)
+    public ItemController(IRepository<Item> itemsRepository)
     {
         this._itemsRepository = itemsRepository;
     } 
