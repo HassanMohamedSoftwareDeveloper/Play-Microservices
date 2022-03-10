@@ -4,7 +4,7 @@ using Play.Shared.MassTransit;
 using Play.Shared.MongoDB;
 using Polly;
 using Polly.Timeout;
-
+const string AllowedOriginSetting = "AllowedOrigin";
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -29,6 +29,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors(corsBbuilder =>
+    {
+        corsBbuilder.WithOrigins(builder.Configuration[AllowedOriginSetting])
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
 }
 
 app.UseHttpsRedirection();
